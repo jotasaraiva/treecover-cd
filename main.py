@@ -16,11 +16,11 @@ Path("logs").mkdir(parents=True, exist_ok=True)
 
 def main():
     pipeline = DataPipeline()
-    #pipeline.raw()
-    #pipeline.preprocessed()
+    pipeline.raw()
+    pipeline.preprocessed()
     pipeline.labels()
 
 if __name__ == "__main__":
-    logger.info("Starting data processing pipeline...")
+    logger.info("Starting pipeline...")
     main()
-    logger.info("Data processing pipeline completed successfully.")
+    logger.info("Pipeline completed successfully.")

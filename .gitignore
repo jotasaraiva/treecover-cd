@@ -14,7 +14,8 @@ wheels/
 .vscode
 
 # Data
-*.tif
+data/preprocessed/
+data/raw/
 *.zip
 logs/
 ipynb_checkpoints/

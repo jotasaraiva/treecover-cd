@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ee.Authenticate()
+ee.Authenticate(auth_mode="notebook")
 ee.Initialize()
 
 class DataPipeline:
@@ -30,7 +30,8 @@ class DataPipeline:
 
     def raw(self):
     
-        data = Path("data/labels/oiapoque_change_2000_2024.tif")
+        data = Path("data/labels/sample_2000_2024.tif")
+        data.parent.mkdir(parents=True, exist_ok=True)
     
         with rio.open(data) as src:
             meta = src.meta
@@ -204,7 +205,7 @@ class DataPipeline:
                     with rio.open(output_path, "w", **profile) as dst:
                         dst.write(aligned, 1)
                         
-        labels = Path("data/labels/oiapoque_change_2000_2024.tif")
+        labels = Path("data/labels/sample_2000_2024.tif")
         reference = Path("data/preprocessed/").iterdir().__next__()
         labels_aligned = Path(f"data/labels/{labels.stem}_aligned.tif")
         labels_normalized = Path(f"data/labels/{labels.stem}_normalized.tif")
