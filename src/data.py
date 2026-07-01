@@ -208,7 +208,7 @@ class DataPipeline:
         labels = Path("data/labels/sample_2000_2024.tif")
         reference = Path("data/preprocessed/").iterdir().__next__()
         labels_aligned = Path(f"data/labels/{labels.stem}_aligned.tif")
-        labels_normalized = Path(f"data/labels/{labels.stem}_normalized.tif")
+        labels_normalized = Path(f"data/labels/sample_{self.year_start}_{self.year_end}_normalized.tif")
         
         logger.info(f"Aligning labels to reference {reference.name} ...")
         align_labels_to_reference(
