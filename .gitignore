@@ -18,5 +18,6 @@ data/preprocessed/
 data/raw/
 *.zip
 logs/
-ipynb_checkpoints/
+.ipynb_checkpoints/
 *.ipynb
+local/

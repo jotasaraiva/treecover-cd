@@ -1,7 +1,7 @@
 [project]
-name = "tests"
+name = "treecover-cd"
 version = "0.1.0"
-description = "Add your description here"
+description = "Treecover change detection using Sentinel-1 data"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,7 +9,10 @@ dependencies = [
     "geemap>=0.38.2",
     "geopandas>=1.1.3",
     "ipykernel>=7.3.0",
+    "ipywidgets>=8.1.8",
+    "jupyterlab>=4.6.1",
     "leafmap>=0.62.0",
+    "localtileserver>=1.0.0",
     "matplotlib>=3.11.0",
     "numpy>=2.5.0",
     "pandas>=3.0.3",
