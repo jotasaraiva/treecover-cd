@@ -18,7 +18,8 @@ class ConvGRUCell(nn.Module):
             in_channels=input_channels + hidden_channels,
             out_channels=hidden_channels,
             kernel_size=kernel_size,
-            padding=padding
+            padding=padding,
+            padding_mode="reflect"
         )
 
         # Reset gate
@@ -26,7 +27,8 @@ class ConvGRUCell(nn.Module):
             in_channels=input_channels + hidden_channels,
             out_channels=hidden_channels,
             kernel_size=kernel_size,
-            padding=padding
+            padding=padding,
+            padding_mode="reflect"
         )
 
         # Candidate hidden state
@@ -34,7 +36,8 @@ class ConvGRUCell(nn.Module):
             in_channels=input_channels + hidden_channels,
             out_channels=hidden_channels,
             kernel_size=kernel_size,
-            padding=padding
+            padding=padding,
+            padding_mode="reflect"
         )
 
     def forward(
