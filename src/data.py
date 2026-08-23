@@ -5,17 +5,14 @@ import geopandas as gpd
 import rasterio as rio
 import numpy as np
 import geemap
+import json
 import ee
 import os
 import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("logs/pipeline.log", mode="a")
-    ]
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,12 +49,12 @@ class DataPipeline:
     
         s1 = s1.map(lambda img: img.clip(geom))
     
-        v_emit_asc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'ASCENDING'))
+        v_emit_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
     
         raw_dir = Path("data/raw/")
         os.makedirs(raw_dir, exist_ok=True)
     
-        collection = v_emit_asc.select(["VV", "VH"])
+        collection = v_emit_desc.select(["VV", "VH"])
     
         monthly = []
         for year in range(self.year_start, self.year_end + 1):
@@ -150,7 +147,38 @@ class DataPipeline:
 
             with rio.open(out_path, "w", **profile) as dst:
                 dst.write(aligned, 1)
-                
+
+        logger.info("Computing per-month normalization stats ...")
+        agg_dir = Path("data/aggregated/")
+        agg_dir.mkdir(parents=True, exist_ok=True)
+
+        months = sorted({
+            f.stem.split(".")[0]
+            for f in out_dir.glob("*.tif")
+        })
+
+        norm_stats = {}
+        for month in months:
+            vv_path = out_dir / f"{month}.VV.tif"
+            vh_path = out_dir / f"{month}.VH.tif"
+
+            with rio.open(vv_path) as src:
+                vv = src.read(1).astype(np.float32)
+
+            with rio.open(vh_path) as src:
+                vh = src.read(1).astype(np.float32)
+
+            norm_stats[month] = {
+                "vv": [float(np.nanmean(vv)), float(np.nanstd(vv) + 1e-6)],
+                "vh": [float(np.nanmean(vh)), float(np.nanstd(vh) + 1e-6)]
+            }
+
+        stats_path = agg_dir / "norm_stats.json"
+        with open(stats_path, "w") as f:
+            json.dump(norm_stats, f, indent=2)
+
+        logger.info(f"Saved normalization stats to {stats_path}")
+
     def labels(self):
         
         def normalize(arr):
