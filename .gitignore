@@ -16,8 +16,9 @@ wheels/
 # Data
 data/preprocessed/
 data/raw/
+data/aggregated/
 *.zip
 logs/
 .ipynb_checkpoints/
-*.ipynb
+notebooks/
 local/
