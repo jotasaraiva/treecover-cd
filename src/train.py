@@ -44,6 +44,8 @@ def conv_rnn_training(
             kernel_size=kernel_size,
             head_channels=head_channels
         )
+    else:
+        raise ValueError("Model unrecognized.")
 
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lrate)

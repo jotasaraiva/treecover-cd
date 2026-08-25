@@ -18,7 +18,6 @@ data/preprocessed/
 data/raw/
 data/aggregated/
 *.zip
-logs/
 .ipynb_checkpoints/
 notebooks/
 local/
