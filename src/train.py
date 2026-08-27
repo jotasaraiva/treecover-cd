@@ -1,5 +1,5 @@
 import torch
-from src.models import ConvGRURegressor
+from src.models import ConvGRURegressor, ConvLSTMRegressor
 from torch.utils.data import DataLoader
 from pathlib import Path
 import pandas as pd
@@ -31,7 +31,7 @@ def conv_rnn_training(
     pos_weight: float,
     device: torch.device,
     weights_path: str | Path,
-    arch: Literal["ConvGRU"],
+    arch: Literal["ConvGRU", "ConvLSTM"],
     patience: int | None = None,
 ) -> pd.DataFrame:
 
@@ -39,6 +39,13 @@ def conv_rnn_training(
 
     if arch == "ConvGRU":
         model = ConvGRURegressor(
+            input_channels=input_channels,
+            hidden_channels=hidden_channels,
+            kernel_size=kernel_size,
+            head_channels=head_channels
+        )
+    elif arch == "ConvLSTM":
+        model = ConvLSTMRegressor(
             input_channels=input_channels,
             hidden_channels=hidden_channels,
             kernel_size=kernel_size,
