@@ -15,7 +15,9 @@ wheels/
 
 # Data
 data/preprocessed/
+data/preprocessed_test/
 data/raw/
+data/raw_test/
 data/aggregated/
 *.zip
 .ipynb_checkpoints/
