@@ -21,13 +21,25 @@ ee.Initialize()
 
 class DataPipeline:
 
-    def __init__(self) -> None:
-        self.year_start = 2018
-        self.year_end = 2024
+    def __init__(
+        self,
+        label_path: str | Path,
+        raw_path: str | Path,
+        preproc_path: str | Path,
+        stats_path: str | Path = "data/aggregated/norm_stats.json",
+        year_start: int = 2018,
+        year_end: int = 2024,
+    ) -> None:
+        self.year_start = year_start
+        self.year_end = year_end
+        self.label_path = label_path
+        self.raw_path = raw_path
+        self.preproc_path = preproc_path
+        self.stats_path = stats_path
 
     def raw(self):
     
-        data = Path("data/labels/sample_2000_2024.tif")
+        data = Path(self.label_path)
         data.parent.mkdir(parents=True, exist_ok=True)
     
         with rio.open(data) as src:
@@ -51,7 +63,7 @@ class DataPipeline:
     
         v_emit_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
     
-        raw_dir = Path("data/raw/")
+        raw_dir = Path(self.raw_path)
         os.makedirs(raw_dir, exist_ok=True)
     
         collection = v_emit_desc.select(["VV", "VH"])
@@ -88,8 +100,8 @@ class DataPipeline:
 
     def preprocessed(self):
 
-        raw_dir = Path("data/raw/")
-        out_dir = Path("data/preprocessed/")
+        raw_dir = Path(self.raw_path)
+        out_dir = Path(self.preproc_path)
 
         if not raw_dir.exists():
             raise ValueError("Run raw() first")
@@ -123,7 +135,7 @@ class DataPipeline:
 
         for f in files:
 
-            logger.info(f"Preprocessing file {f.stem} ...")
+            logger.info(f"Pré-processando {f.stem} ...")
             with rio.open(f) as src:
                 data = src.read(1).astype(np.float32)
 
@@ -148,9 +160,9 @@ class DataPipeline:
             with rio.open(out_path, "w", **profile) as dst:
                 dst.write(aligned, 1)
 
-        logger.info("Computing per-month normalization stats ...")
-        agg_dir = Path("data/aggregated/")
-        agg_dir.mkdir(parents=True, exist_ok=True)
+        logger.info("Computando estatísticas de normalização por mês ...")
+        stats_path = Path(self.stats_path)
+        stats_path.parent.mkdir(parents=True, exist_ok=True)
 
         months = sorted({
             f.stem.split(".")[0]
@@ -173,13 +185,12 @@ class DataPipeline:
                 "vh": [float(np.nanmean(vh)), float(np.nanstd(vh) + 1e-6)]
             }
 
-        stats_path = agg_dir / "norm_stats.json"
         with open(stats_path, "w") as f:
             json.dump(norm_stats, f, indent=2)
 
-        logger.info(f"Saved normalization stats to {stats_path}")
+        logger.info(f"Dados de normalização salvos em {stats_path}")
 
-    def labels(self):
+    def labels(self, outfile: str | Path):
         
         def normalize(arr):
             arr = np.asarray(arr, dtype=np.float64) # Ensure float output to prevent integer division
@@ -233,19 +244,19 @@ class DataPipeline:
                     with rio.open(output_path, "w", **profile) as dst:
                         dst.write(aligned, 1)
                         
-        labels = Path("data/labels/sample_2000_2024.tif")
-        reference = Path("data/preprocessed/").iterdir().__next__()
+        labels = Path(self.label_path)
+        reference = Path(self.preproc_path).iterdir().__next__()
         labels_aligned = Path(f"data/labels/{labels.stem}_aligned.tif")
-        labels_normalized = Path(f"data/labels/sample_{self.year_start}_{self.year_end}_normalized.tif")
+        labels_normalized = Path(outfile)
         
-        logger.info(f"Aligning labels to reference {reference.name} ...")
+        logger.info(f"Alinhando rótulos para a referência {reference.name} ...")
         align_labels_to_reference(
             label_path=labels,
             reference_path=reference,
             output_path=labels_aligned
         )
         
-        logger.info(f"Normalizing labels in {labels_aligned.name} ...")
+        logger.info(f"Normalizando rótulos em {labels_aligned.name} ...")
         with rio.open(labels_aligned) as src:
             arr = src.read(1)
             
@@ -264,11 +275,11 @@ class DataPipeline:
                 compress="lzw",
             )
             
-            logger.info(f"Saving normalized labels to {labels_normalized.name} ...")
+            logger.info(f"Salvando rótulos normalizados em {labels_normalized.name} ...")
             with rio.open(labels_normalized, "w", **profile) as dst:
                 dst.write(arr.astype(rio.float32), 1)
         
-        logger.info(f"Checking metadata of normalized labels and reference ...")
+        logger.info(f"Verificando metadados dos rótulos normalizados e da referência ...")
         with rio.open(labels_normalized) as lbl:
             logger.info("Label")
             logger.info(f"shape: {lbl.height}, {lbl.width}")
