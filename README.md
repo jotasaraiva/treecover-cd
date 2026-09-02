@@ -30,7 +30,7 @@ logs/            # histórico de treino por execução, em .parquet (rastreados)
 best_model.pth   # cópia dos pesos do melhor modelo (menor MAE no teste), na raiz
 ```
 
-`data/raw*/`, `data/preprocessed*/` e `data/aggregated/` são gerados pelo pipeline e não são versionados, veja abaixo como recriá-los.
+`data/raw*/`, `data/preprocessed*/`, `data/aggregated/` e `results/` são gerados pelo pipeline e não são versionados, veja abaixo como recriá-los.
 
 ## Como rodar
 
@@ -54,9 +54,7 @@ uv pip install --system .
 
 ### Acesso aos dados (Kaggle)
 
-Os rasters brutos (composições mensais VV/VH, já exportadas do Earth Engine) estão hospedados no dataset [`jotasaraiva/treecover-cd-data`](https://www.kaggle.com/datasets/jotasaraiva/treecover-cd-data) e são baixados automaticamente pelo pipeline via `kagglehub`, não é mais necessário autenticar no Earth Engine para rodar o projeto.
-
-É preciso apenas de um token de API do Kaggle:
+Os rasters brutos (composições mensais VV/VH, já exportadas do Earth Engine) estão hospedados no dataset [`jotasaraiva/treecover-cd-data`](https://www.kaggle.com/datasets/jotasaraiva/treecover-cd-data) e são baixados automaticamente pelo pipeline via `kagglehub`, não é necessário autenticar no Earth Engine para rodar o projeto. É preciso apenas de um token de API do Kaggle:
 
 1. Gere um token em [kaggle.com/settings](https://www.kaggle.com/settings) → *API* → *Create New Token* (baixa um `kaggle.json`).
 2. Coloque o arquivo em `~/.kaggle/kaggle.json`, **ou** defina as variáveis de ambiente `KAGGLE_USERNAME`/`KAGGLE_KEY`, **ou** rode `kagglehub.login()` uma vez em Python para configurar interativamente.
