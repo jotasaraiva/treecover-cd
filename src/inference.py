@@ -76,6 +76,7 @@ def conv_rnn_predict(
     dataset: SARDataset,
     device: torch.device,
     batch_size: int,
+    postproc: bool = True
 ) -> np.ndarray:
     full_pred = np.zeros((dataset.height, dataset.width), dtype=np.float32)
     dataset.augment = False
@@ -104,8 +105,11 @@ def conv_rnn_predict(
                 ] = pred[:read_height, :read_width]
                 
                 idx += 1
-                
-    return postprocess(full_pred)
+    
+    if postproc:
+        return postprocess(full_pred)
+    else:
+        return full_pred
 
 
 def postprocess(arr: np.ndarray, size: int = 5) -> np.ndarray:

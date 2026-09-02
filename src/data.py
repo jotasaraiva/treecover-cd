@@ -1,13 +1,10 @@
 from rasterio.warp import reproject, Resampling
-from shapely.geometry import box
 from pathlib import Path
-import geopandas as gpd
 import rasterio as rio
 import numpy as np
-import geemap
+import kagglehub
+import shutil
 import json
-import ee
-import os
 import logging
 
 logging.basicConfig(
@@ -16,8 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ee.Authenticate(auth_mode="notebook")
-ee.Initialize()
+KAGGLE_DATASET = "jotasaraiva/treecover-cd-data"
 
 class DataPipeline:
 
@@ -38,65 +34,25 @@ class DataPipeline:
         self.stats_path = stats_path
 
     def raw(self):
-    
-        data = Path(self.label_path)
-        data.parent.mkdir(parents=True, exist_ok=True)
-    
-        with rio.open(data) as src:
-            meta = src.meta
-            bbox = src.bounds
-    
-        gdf = gpd.GeoDataFrame({"geometry": [box(*bbox)]}, crs=meta["crs"])
-        fc = geemap.gdf_to_ee(gdf)
-        geom = fc.geometry()
-    
-        s1 = (
-            ee.ImageCollection('COPERNICUS/S1_GRD')
-                .filterBounds(geom)
-                .filterDate(f"{self.year_start}-01-01", f"{self.year_end + 1}-01-01")
-                .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
-                .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
-                .filter(ee.Filter.eq('instrumentMode', 'IW'))
-        )
-    
-        s1 = s1.map(lambda img: img.clip(geom))
-    
-        v_emit_desc = s1.filter(ee.Filter.eq('orbitProperties_pass', 'DESCENDING'))
-    
+
         raw_dir = Path(self.raw_path)
-        os.makedirs(raw_dir, exist_ok=True)
-    
-        collection = v_emit_desc.select(["VV", "VH"])
-    
-        monthly = []
-        for year in range(self.year_start, self.year_end + 1):
-            for month in range(1, 13):
-            
-                start = ee.Date.fromYMD(year, month, 1)
-                end = start.advance(1, "month")
-    
-                img = (
-                    collection
-                    .filterDate(start, end)
-                    .median()
-                    .clip(geom)
-                    .set({
-                        "system:index": f"{year}-{month:02d}",
-                        "system:time_start": start.millis()
-                    })
-                )
-    
-                monthly.append(img)
-    
-        monthly_collection = ee.ImageCollection(monthly)
-    
-        geemap.ee_export_image_collection(
-            monthly_collection,
-            out_dir=raw_dir,
-            scale=10,
-            region=geom,
-            file_per_band=True
-        )
+        raw_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info(f"Baixando dataset {KAGGLE_DATASET} do Kaggle ...")
+        dataset_dir = Path(kagglehub.dataset_download(KAGGLE_DATASET))
+
+        source_dir = dataset_dir / raw_dir.name
+        if not source_dir.exists():
+            raise FileNotFoundError(
+                f"Pasta '{raw_dir.name}' não encontrada em {dataset_dir}. "
+                f"Conteúdo disponível: {[p.name for p in dataset_dir.iterdir()]}"
+            )
+
+        files = list(source_dir.glob("*.tif"))
+        for f in files:
+            shutil.copy2(f, raw_dir / f.name)
+
+        logger.info(f"{len(files)} arquivos copiados de {source_dir} para {raw_dir}")
 
     def preprocessed(self):
 
